@@ -1,25 +1,11 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package towerofhanoi;
 
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * Represents the game board.
- * Displays towers and disks during game play.
- *
- * @author Infinix
- */
 public class GameBoard extends JFrame {
 
     private GameController controller;
-
-    private JLabel towerALabel;
-    private JLabel towerBLabel;
-    private JLabel towerCLabel;
 
     private JLabel moveLabel;
     private JLabel minimumMoveLabel;
@@ -29,20 +15,28 @@ public class GameBoard extends JFrame {
     private JComboBox<String> fromBox;
     private JComboBox<String> toBox;
 
+    private JButton moveButton;
+    private JButton restartButton;
+    private JButton autoSolveButton;
+    private JButton aboutButton;
+
     private GameTimer gameTimer;
+
+    private GamePanel gamePanel;
+
+    private boolean autoSolving = false;
 
     public GameBoard() {
 
         controller = new GameController();
 
         setTitle("Tower of Hanoi - Game");
-        setSize(700, 500);
+        setSize(850, 650);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
 
         createGUI();
 
-        // Create game timer
         gameTimer = new GameTimer(seconds -> {
 
             int minutes = seconds / 60;
@@ -59,7 +53,6 @@ public class GameBoard extends JFrame {
 
         updateBoard();
 
-        // Start timer when game starts
         gameTimer.start();
 
         setVisible(true);
@@ -67,58 +60,47 @@ public class GameBoard extends JFrame {
 
     private void createGUI() {
 
-        setLayout(new BorderLayout());
+        setLayout(new BorderLayout(10, 10));
 
         // =========================
-        // Title
+        // TOP TITLE
         // =========================
+
+        JPanel titlePanel = new JPanel();
 
         JLabel title = new JLabel("TOWER OF HANOI");
 
-        title.setHorizontalAlignment(
-                SwingConstants.CENTER
-        );
-
         title.setFont(
-                new Font("Arial", Font.BOLD, 25)
+                new Font("Arial", Font.BOLD, 28)
         );
 
-        add(title, BorderLayout.NORTH);
+        titlePanel.add(title);
+
+        add(titlePanel, BorderLayout.NORTH);
 
         // =========================
-        // Tower Panel
+        // GAME PANEL
         // =========================
 
-        JPanel towerPanel =
-                new JPanel(new GridLayout(1, 3));
+        gamePanel = new GamePanel(controller);
 
-        towerALabel = new JLabel();
-        towerBLabel = new JLabel();
-        towerCLabel = new JLabel();
-
-        towerALabel.setHorizontalAlignment(
-                SwingConstants.CENTER
+        add(
+                gamePanel,
+                BorderLayout.CENTER
         );
 
-        towerBLabel.setHorizontalAlignment(
-                SwingConstants.CENTER
-        );
-
-        towerCLabel.setHorizontalAlignment(
-                SwingConstants.CENTER
-        );
-
-        towerPanel.add(towerALabel);
-        towerPanel.add(towerBLabel);
-        towerPanel.add(towerCLabel);
-
-        add(towerPanel, BorderLayout.CENTER);
-
         // =========================
-        // Bottom Panel
+        // CONTROL PANEL
         // =========================
 
-        JPanel bottomPanel = new JPanel();
+        JPanel controlPanel =
+                new JPanel(
+                        new FlowLayout(
+                                FlowLayout.CENTER,
+                                8,
+                                8
+                        )
+                );
 
         fromBox = new JComboBox<>(
                 new String[]{
@@ -136,11 +118,47 @@ public class GameBoard extends JFrame {
                 }
         );
 
-        JButton moveButton =
+        moveButton =
                 new JButton("Move");
 
-        JButton restartButton =
+        restartButton =
                 new JButton("Restart");
+
+        autoSolveButton =
+                new JButton("Auto Solve");
+
+        aboutButton =
+                new JButton("About");
+
+        controlPanel.add(
+                new JLabel("From:")
+        );
+
+        controlPanel.add(fromBox);
+
+        controlPanel.add(
+                new JLabel("To:")
+        );
+
+        controlPanel.add(toBox);
+
+        controlPanel.add(moveButton);
+        controlPanel.add(restartButton);
+        controlPanel.add(autoSolveButton);
+        controlPanel.add(aboutButton);
+
+        // =========================
+        // INFORMATION PANEL
+        // =========================
+
+        JPanel infoPanel =
+                new JPanel(
+                        new FlowLayout(
+                                FlowLayout.CENTER,
+                                25,
+                                5
+                        )
+                );
 
         moveLabel =
                 new JLabel("Moves: 0");
@@ -151,35 +169,35 @@ public class GameBoard extends JFrame {
                         + controller.getMinimumMoves()
                 );
 
-        statusLabel =
-                new JLabel("Status: Playing");
-
         timerLabel =
                 new JLabel("Time: 00:00");
 
+        statusLabel =
+                new JLabel("Status: Playing");
+
+        infoPanel.add(moveLabel);
+        infoPanel.add(minimumMoveLabel);
+        infoPanel.add(timerLabel);
+        infoPanel.add(statusLabel);
+
+        // =========================
+        // BOTTOM PANEL
+        // =========================
+
+        JPanel bottomPanel =
+                new JPanel(
+                        new BorderLayout()
+                );
+
         bottomPanel.add(
-                new JLabel("From:")
+                controlPanel,
+                BorderLayout.CENTER
         );
 
-        bottomPanel.add(fromBox);
-
         bottomPanel.add(
-                new JLabel("To:")
+                infoPanel,
+                BorderLayout.SOUTH
         );
-
-        bottomPanel.add(toBox);
-
-        bottomPanel.add(moveButton);
-
-        bottomPanel.add(restartButton);
-
-        bottomPanel.add(moveLabel);
-
-        bottomPanel.add(minimumMoveLabel);
-
-        bottomPanel.add(timerLabel);
-
-        bottomPanel.add(statusLabel);
 
         add(
                 bottomPanel,
@@ -187,7 +205,7 @@ public class GameBoard extends JFrame {
         );
 
         // =========================
-        // Button Actions
+        // BUTTON ACTIONS
         // =========================
 
         moveButton.addActionListener(
@@ -197,13 +215,25 @@ public class GameBoard extends JFrame {
         restartButton.addActionListener(
                 e -> restartGame()
         );
+
+        autoSolveButton.addActionListener(
+                e -> startAutoSolve()
+        );
+
+        aboutButton.addActionListener(
+                e -> showAbout()
+        );
     }
 
     // =========================
-    // Perform Move
+    // MANUAL MOVE
     // =========================
 
     private void performMove() {
+
+        if (autoSolving) {
+            return;
+        }
 
         int from =
                 fromBox.getSelectedIndex();
@@ -212,7 +242,10 @@ public class GameBoard extends JFrame {
                 toBox.getSelectedIndex();
 
         boolean success =
-                controller.moveDisk(from, to);
+                controller.moveDisk(
+                        from,
+                        to
+                );
 
         if (success) {
 
@@ -220,41 +253,22 @@ public class GameBoard extends JFrame {
 
             if (controller.isSolved()) {
 
-                // Stop timer
                 gameTimer.stop();
 
                 statusLabel.setText(
                         "Status: Completed"
                 );
 
-                JOptionPane.showMessageDialog(
-                        this,
-
-                        "Congratulations! "
-                        + "Puzzle Solved!\n\n"
-
-                        + "Your Moves: "
-                        + controller.getMoveCount()
-                        + "\n"
-
-                        + "Minimum Moves: "
-                        + controller.getMinimumMoves()
-                        + "\n"
-
-                        + "Your Time: "
-                        + timerLabel.getText().substring(6),
-
-                        "Game Completed",
-
-                        JOptionPane.INFORMATION_MESSAGE
-                );
+                showSuccessMessage();
             }
 
         } else {
 
             JOptionPane.showMessageDialog(
                     this,
-                    "Invalid Move!",
+                    "Invalid Move!\n\n"
+                    + "You cannot place a larger disk "
+                    + "on a smaller disk.",
                     "Invalid Move",
                     JOptionPane.WARNING_MESSAGE
             );
@@ -262,49 +276,33 @@ public class GameBoard extends JFrame {
     }
 
     // =========================
-    // Update Board
+    // UPDATE BOARD
     // =========================
 
-    private void updateBoard() {
+    public void updateBoard() {
 
-        towerALabel.setText(
-                createTowerText(
-                        "Tower A",
-                        controller.getTower(0)
-                )
-        );
+        gamePanel.refresh();
 
-        towerBLabel.setText(
-                createTowerText(
-                        "Tower B",
-                        controller.getTower(1)
-                )
-        );
-
-        towerCLabel.setText(
-                createTowerText(
-                        "Tower C",
-                        controller.getTower(2)
-                )
-        );
-
-        // Update move count
         moveLabel.setText(
                 "Moves: "
                 + controller.getMoveCount()
         );
 
-        // Update minimum moves
         minimumMoveLabel.setText(
                 "Minimum Moves: "
                 + controller.getMinimumMoves()
         );
 
-        // Update game status
         if (controller.isGameCompleted()) {
 
             statusLabel.setText(
                     "Status: Completed"
+            );
+
+        } else if (autoSolving) {
+
+            statusLabel.setText(
+                    "Status: Auto Solving..."
             );
 
         } else {
@@ -316,72 +314,160 @@ public class GameBoard extends JFrame {
     }
 
     // =========================
-    // Create Tower Display
-    // =========================
-
-    private String createTowerText(
-            String towerName,
-            Tower tower) {
-
-        StringBuilder text =
-                new StringBuilder();
-
-        text.append("<html>");
-        text.append("<center>");
-
-        text.append("<b>");
-        text.append(towerName);
-        text.append("</b>");
-
-        text.append("<br><br>");
-
-        if (tower.isEmpty()) {
-
-            text.append("Empty");
-
-        } else {
-
-            for (
-                    int i = tower.getDiskCount() - 1;
-                    i >= 0;
-                    i--
-            ) {
-
-                text.append(
-                        "Disk "
-                        + tower.getDisk(i).getSize()
-                );
-
-                text.append("<br>");
-            }
-        }
-
-        text.append("</center>");
-        text.append("</html>");
-
-        return text.toString();
-    }
-
-    // =========================
-    // Restart Game
+    // RESTART
     // =========================
 
     private void restartGame() {
 
+        if (autoSolving) {
+            return;
+        }
+
         controller.resetGame();
 
-        // Reset timer
         gameTimer.reset();
 
-        // Update board
         updateBoard();
 
-        // Update status
         statusLabel.setText(
                 "Status: Playing"
         );
 
-        // Start timer again
         gameTimer.start();
+    }
+
+    // =========================
+    // AUTO SOLVE
+    // =========================
+
+    private void startAutoSolve() {
+
+        if (autoSolving) {
+            return;
+        }
+
+        if (controller.isSolved()) {
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "The puzzle is already solved.",
+                    "Auto Solve",
+                    JOptionPane.INFORMATION_MESSAGE
+            );
+
+            return;
+        }
+
+        int choice =
+                JOptionPane.showConfirmDialog(
+                        this,
+                        "Do you want to automatically solve "
+                        + "the puzzle?",
+                        "Auto Solve",
+                        JOptionPane.YES_NO_OPTION
+                );
+
+        if (choice != JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        autoSolving = true;
+
+        moveButton.setEnabled(false);
+        restartButton.setEnabled(false);
+        autoSolveButton.setEnabled(false);
+        fromBox.setEnabled(false);
+        toBox.setEnabled(false);
+
+        gameTimer.stop();
+
+        statusLabel.setText(
+                "Status: Auto Solving..."
+        );
+
+        AutoSolver solver =
+                new AutoSolver(
+                        controller,
+                        this
+                );
+
+        solver.solve();
+    }
+
+    // =========================
+    // AUTO SOLVE FINISHED
+    // =========================
+
+    public void autoSolveFinished() {
+
+        SwingUtilities.invokeLater(() -> {
+
+            autoSolving = false;
+
+            moveButton.setEnabled(true);
+            restartButton.setEnabled(true);
+            autoSolveButton.setEnabled(true);
+            fromBox.setEnabled(true);
+            toBox.setEnabled(true);
+
+            updateBoard();
+
+            gameTimer.stop();
+
+            if (controller.isSolved()) {
+
+                statusLabel.setText(
+                        "Status: Completed"
+                );
+
+                showSuccessMessage();
+            }
+        });
+    }
+
+    // =========================
+    // SUCCESS MESSAGE
+    // =========================
+
+    private void showSuccessMessage() {
+
+        JOptionPane.showMessageDialog(
+                this,
+                "Congratulations!\n\n"
+                + "Puzzle Solved Successfully!\n\n"
+                + "Your Moves: "
+                + controller.getMoveCount()
+                + "\n"
+                + "Minimum Moves: "
+                + controller.getMinimumMoves()
+                + "\n"
+                + "Your Time: "
+                + timerLabel.getText().substring(6),
+                "Game Completed",
+                JOptionPane.INFORMATION_MESSAGE
+        );
+    }
+
+    // =========================
+    // ABOUT
+    // =========================
+
+    private void showAbout() {
+
+        JOptionPane.showMessageDialog(
+                this,
+                "Tower of Hanoi Game\n\n"
+                + "Developed using Java Swing\n"
+                + "Algorithm: Recursive Tower of Hanoi\n\n"
+                + "Features:\n"
+                + "- Manual Disk Movement\n"
+                + "- Move Validation\n"
+                + "- Move Counter\n"
+                + "- Timer\n"
+                + "- Auto Solver\n"
+                + "- Win Detection",
+                "About",
+                JOptionPane.INFORMATION_MESSAGE
+        );
     }
 }
